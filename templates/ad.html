@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Watch Ad</title>
+    <style>
+        .success-message {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #3498db; /* 파란색 */
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <h1>Watch Ad to Download</h1>
+    <p class="success-message">Success</p>
+    <div class="ad-banner">
+        <!-- 광고 배너 코드 삽입 -->
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-xxxxxxxxxxxxxxxx"
+             data-ad-slot="xxxxxxxxxx"
+             data-ad-format="auto"></ins>
+        <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+    </div>
+    <form method="get" action="{{ url_for('download_file', filename=file) }}">
+        <button type="submit">Download</button>
+    </form>
+    <form method="get" action="/back">
+        <button type="submit">Back</button>
+    </form>
+</body>
+</html>
