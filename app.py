@@ -21,7 +21,10 @@ def download():
             'preferredcodec': 'mp3',
             'preferredquality': '192',
         }] if format == 'mp3' else [],
-        'ffmpeg_location': '/usr/bin/ffmpeg'
+        'ffmpeg_location': '/usr/bin/ffmpeg',
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        }
     }
 
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
