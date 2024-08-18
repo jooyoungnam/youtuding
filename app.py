@@ -12,32 +12,17 @@ def index():
 def download():
     url = request.form['url']
     format = request.form['format']
-    
-    # 쿠키 파일 경로 설정
-    cookie_file_path = 'cookies.txt'
-    if os.path.exists(cookie_file_path):
-        ydl_opts = {
-            'cookiefile': cookie_file_path,
-            'format': 'bestvideo+bestaudio/best' if format == 'mp4' else 'bestaudio/best',
-            'outtmpl': 'downloads/%(title)s.%(ext)s',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }] if format == 'mp3' else [],
-            'ffmpeg_location': '/usr/bin/ffmpeg'
-        }
-    else:
-        ydl_opts = {
-            'format': 'bestvideo+bestaudio/best' if format == 'mp4' else 'bestaudio/best',
-            'outtmpl': 'downloads/%(title)s.%(ext)s',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }] if format == 'mp3' else [],
-            'ffmpeg_location': '/usr/bin/ffmpeg'
-        }
+
+    ydl_opts = {
+        'format': 'bestvideo+bestaudio/best' if format == 'mp4' else 'bestaudio/best',
+        'outtmpl': 'downloads/%(title)s.%(ext)s',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }] if format == 'mp3' else [],
+        'ffmpeg_location': '/usr/bin/ffmpeg'
+    }
 
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         info_dict = ydl.extract_info(url, download=True)
