@@ -21,7 +21,10 @@ def download():
             'preferredcodec': 'mp3',
             'preferredquality': '192',
         }] if format == 'mp3' else [],
-        'ffmpeg_location': '/usr/bin/ffmpeg'  # 서버에서 ffmpeg 경로
+        'ffmpeg_location': '/usr/bin/ffmpeg',  # 서버에서 ffmpeg 경로
+        'cookiefile': '/path/to/cookies.txt',  # 쿠키 파일 경로
+        'no-cache-dir': True,  # 캐시 비활성화
+        'restrictfilenames': True  # 파일 이름에서 특수 문자 제거
     }
     
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
