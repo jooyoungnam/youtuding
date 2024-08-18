@@ -1,6 +1,7 @@
-from flask import Flask, request, render_template, send_from_directory, redirect, url_for
+from flask import Flask, request, render_template, send_file, redirect, url_for
 import yt_dlp as youtube_dl
 import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
@@ -12,7 +13,7 @@ def index():
 def download():
     url = request.form['url']
     format = request.form['format']
-
+    
     ydl_opts = {
         'format': 'bestvideo+bestaudio/best' if format == 'mp4' else 'bestaudio/best',
         'outtmpl': 'downloads/%(title)s.%(ext)s',
@@ -21,26 +22,19 @@ def download():
             'preferredcodec': 'mp3',
             'preferredquality': '192',
         }] if format == 'mp3' else [],
-        'ffmpeg_location': '/usr/bin/ffmpeg',
-        'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        }
+        'ffmpeg_location': '/usr/bin/ffmpeg'
     }
-
+    
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         info_dict = ydl.extract_info(url, download=True)
-        file_name = ydl.prepare_filename(info_dict).replace('.webm', f'.{format}').replace('.m4a', f'.{format}')
+        file_name = ydl.prepare_filename(info_dict)
+        final_name = secure_filename(file_name.replace('.webm', f'.{format}').replace('.m4a', f'.{format}'))
     
-    return redirect(url_for('ad', file=os.path.basename(file_name)))
-
-@app.route('/ad')
-def ad():
-    file_name = request.args.get('file')
-    return render_template('ad.html', file=file_name)
+    return redirect(url_for('download_file', filename=final_name))
 
 @app.route('/download-file/<filename>')
 def download_file(filename):
-    return send_from_directory('downloads', filename, as_attachment=True)
+    return send_file(f'downloads/{filename}', as_attachment=True)
 
 @app.route('/back')
 def back():
