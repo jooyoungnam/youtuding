@@ -6,29 +6,29 @@
     <link rel="stylesheet" href="/static/css/styles.css?v=1.0">
     <style>
         body {
-            background-color: #ffffff; /* 배경색을 흰색으로 변경 */
-            color: #000000; /* 텍스트 색상을 검은색으로 변경 */
+            background-color: #ffffff;
+            color: #000000;
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* 중앙 상단에 배치 */
+            align-items: flex-start;
             height: 100vh;
         }
         .container {
             text-align: center;
-            margin-top: 50px; /* 상단 패딩 추가 */
+            margin-top: 50px;
         }
         .title {
             font-size: 2em;
             font-weight: bold;
         }
         .title .youtube {
-            color: #e74c3c; /* 빨간색 */
+            color: #e74c3c;
         }
         .title .downloader {
-            color: #3498db; /* 파란색 */
+            color: #3498db;
         }
         .spinner {
             display: none;
@@ -76,14 +76,14 @@
             margin-right: 10px;
         }
         input, button, label {
-            color: #000000; /* 폼 요소 텍스트 색상 변경 */
+            color: #000000;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1 class="title"><span class="youtube">YouTube</span> <span class="downloader">Downloader</span></h1>
-        <form method="post" action="/download" id="download-form">
+        <form id="download-form" method="post" action="/download" onsubmit="startDownload(); return false;">
             <label for="url">YouTube URL:</label>
             <input type="text" id="url" name="url" required>
             
@@ -104,7 +104,8 @@
         </div>
     </div>
     <script>
-        document.getElementById('download-form').addEventListener('submit', function(event) {
+        function startDownload() {
+            // 로딩 애니메이션을 표시합니다.
             document.getElementById('spinner').style.display = 'block';
             let dots = 0;
             window.dotsInterval = setInterval(() => {
@@ -112,11 +113,11 @@
                 document.getElementById('dots').textContent = '.'.repeat(dots);
             }, 500);
 
-            // 일정 시간 후 강제로 새로고침
+            // 10~15초 후에 페이지를 강제로 새로고침합니다.
             setTimeout(function() {
-                window.location.reload(); // 페이지 새로고침
-            }, 3000); // 3초 후 강제 새로고침
-        });
+                window.location.reload();
+            }, 12000); // 12초 후 새로고침
+        }
     </script>
 </body>
 </html>
