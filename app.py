@@ -1,6 +1,6 @@
-from flask import Flask, request, render_template, send_file, redirect, url_for
-import yt_dlp as youtube_dl
 import os
+import yt_dlp as youtube_dl
+from flask import Flask, request, render_template, send_file, redirect, url_for
 from werkzeug.utils import secure_filename
 import glob
 
@@ -42,6 +42,8 @@ def download():
             base_filename = os.path.splitext(original_filename)[0]  # 확장자를 제외한 파일명
             final_name = secure_filename(f"{base_filename}.{format}")  # 최종 파일명과 확장자
             
+            # 파일 권한 설정
+            os.chmod(original_filename, 0o666)  # 읽기 및 쓰기 권한 설정
             os.rename(original_filename, final_name)  # 다운로드된 파일을 확장자에 맞게 이름 변경
         
         return redirect(url_for('download_file', filename=os.path.basename(final_name)))
@@ -68,7 +70,8 @@ def back():
 if __name__ == '__main__':
     try:
         if not os.path.exists('downloads'):
-            os.makedirs('downloads')
+            os.makedirs('downloads', exist_ok=True)
+        os.chmod('downloads', 0o777)  # downloads 디렉토리에 모든 권한 부여
         app.run(debug=True)
     except Exception as e:
         print(f"서버 시작 중 오류가 발생했습니다: {str(e)}")
