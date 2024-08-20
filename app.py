@@ -17,6 +17,10 @@ def download():
     temp_dir = '/tmp/temp_downloads'
     final_dir = 'downloads'
     
+    # 'url'과 'format' 변수를 폼에서 가져옴
+    url = request.form['url']
+    format = request.form['format']
+    
     try:
         # 임시 디렉토리 생성 (필요 시)
         if not os.path.exists(temp_dir):
