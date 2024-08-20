@@ -22,19 +22,26 @@ def download():
             'preferredcodec': 'mp3',
             'preferredquality': '192',
         }] if format == 'mp3' else [],
-        'ffmpeg_location': '/usr/bin/ffmpeg'
+        'ffmpeg_location': '/usr/bin/ffmpeg',
+        'cachedir': False  # 캐시를 비활성화하여 권한 문제를 피합니다
     }
     
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         info_dict = ydl.extract_info(url, download=True)
-        file_name = ydl.prepare_filename(info_dict)
-        final_name = secure_filename(file_name.replace('.webm', f'.{format}').replace('.m4a', f'.{format}'))
+        original_filename = ydl.prepare_filename(info_dict)  # 원본 파일명
+        base_filename = os.path.splitext(original_filename)[0]  # 확장자를 제외한 파일명
+        final_name = secure_filename(f"{base_filename}.{format}")  # 최종 파일명과 확장자
+        os.rename(original_filename, final_name)  # 다운로드된 파일을 확장자에 맞게 이름 변경
     
-    return redirect(url_for('download_file', filename=final_name))
+    return redirect(url_for('download_file', filename=os.path.basename(final_name)))
 
 @app.route('/download-file/<filename>')
 def download_file(filename):
-    return send_file(f'downloads/{filename}', as_attachment=True)
+    file_path = os.path.join('downloads', filename)
+    if os.path.exists(file_path):
+        return send_file(file_path, as_attachment=True)
+    else:
+        return "File not found", 404
 
 @app.route('/back')
 def back():
