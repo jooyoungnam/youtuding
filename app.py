@@ -28,10 +28,15 @@ def download():
     
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         info_dict = ydl.extract_info(url, download=True)
-        original_filename = ydl.prepare_filename(info_dict)  # 원본 파일명
+        original_filename = ydl.prepare_filename(info_dict)  # 원본 파일명 (확장자가 포함됨)
         base_filename = os.path.splitext(original_filename)[0]  # 확장자를 제외한 파일명
         final_name = secure_filename(f"{base_filename}.{format}")  # 최종 파일명과 확장자
-        os.rename(original_filename, final_name)  # 다운로드된 파일을 확장자에 맞게 이름 변경
+        
+        # 파일이 실제로 존재하는지 확인
+        if os.path.exists(original_filename):
+            os.rename(original_filename, final_name)  # 다운로드된 파일을 확장자에 맞게 이름 변경
+        else:
+            return f"파일을 찾을 수 없습니다: {original_filename}", 404
     
     return redirect(url_for('download_file', filename=os.path.basename(final_name)))
 
