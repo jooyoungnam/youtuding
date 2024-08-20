@@ -5,6 +5,7 @@
     <title>YouTube Downloader</title>
     <link rel="stylesheet" href="/static/css/styles.css?v=1.0">
     <style>
+        /* 스타일 정의 */
         body {
             background-color: #ffffff;
             color: #000000;
@@ -113,10 +114,25 @@
                 document.getElementById('dots').textContent = '.'.repeat(dots);
             }, 500);
 
-            // 10~15초 후에 페이지를 강제로 새로고침합니다.
-            setTimeout(function() {
-                window.location.reload();
-            }, 12000); // 12초 후 새로고침
+            // 폼 데이터 수집
+            const formData = new FormData(document.getElementById('download-form'));
+
+            // 서버에 다운로드 요청 보내기
+            fetch('/download', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                // 다운로드가 완료되면 다운로드 링크를 새 창에서 엽니다.
+                if (response.redirected) {
+                    window.open(response.url, '_blank');
+                    clearInterval(window.dotsInterval); // 로딩 애니메이션 중지
+                    setTimeout(function() {
+                        window.location.reload(); // 페이지 새로고침
+                    }, 5000); // 5초 후 새로고침
+                }
+            })
+            .catch(error => console.error('오류 발생:', error));
         }
     </script>
 </body>
