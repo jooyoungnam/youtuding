@@ -111,21 +111,12 @@
                 dots = (dots + 1) % 4;
                 document.getElementById('dots').textContent = '.'.repeat(dots);
             }, 500);
-        });
 
-        window.addEventListener('popstate', function(event) {
-            window.location.reload(); // 페이지 새로고침
+            // 일정 시간 후 강제로 새로고침
+            setTimeout(function() {
+                window.location.reload(); // 페이지 새로고침
+            }, 3000); // 3초 후 강제 새로고침
         });
-
-        window.onload = function() {
-            if (!window.location.hash) {
-                window.location = window.location + '#loaded';
-                window.location.reload(true);
-            } else {
-                document.getElementById('spinner').style.display = 'none';
-                clearInterval(window.dotsInterval); // Ensure the interval is cleared on load
-            }
-        }
     </script>
 </body>
 </html>
