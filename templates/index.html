@@ -3,64 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <title>YouTube Downloader</title>
-    <link rel="stylesheet" href="/static/css/styles.css?v=1.0">
 </head>
 <body>
     <div class="container">
-        <h1 class="title" onclick="location.reload();">
-            <span class="youtube">YouTube</span> 
-            <span class="downloader">Downloader</span>
-        </h1>
-        <form id="download-form" method="post" action="/download" onsubmit="startDownload(); return false;">
+        <h1>YouTube Downloader</h1>
+        <form method="post" action="/download">
             <label for="url">YouTube URL:</label>
             <input type="text" id="url" name="url" required>
             
-            <div class="inline-label">
-                <label>Format:</label>
-                <div class="radio-group">
-                    <input type="radio" id="format_mp3" name="format" value="mp3" required>
-                    <label for="format_mp3">MP3 <span>🎵</span></label>
-                    <input type="radio" id="format_mp4" name="format" value="mp4" required>
-                    <label for="format_mp4">MP4 <span>🎥</span></label>
-                    <button type="submit">Download</button>
-                </div>
-            </div>
+            <label>Format:</label>
+            <input type="radio" id="format_mp3" name="format" value="mp3" required>
+            <label for="format_mp3">MP3</label>
+            <input type="radio" id="format_mp4" name="format" value="mp4" required>
+            <label for="format_mp4">MP4</label>
+            
+            <button type="submit">Download</button>
         </form>
-        <div class="spinner" id="spinner">
-            <div class="loader"></div>
-            <p id="converting-text">Converting<span id="dots"></span></p>
-        </div>
     </div>
-    <script>
-        function startDownload() {
-            // 로딩 애니메이션을 표시합니다.
-            document.getElementById('spinner').style.display = 'block';
-            let dots = 0;
-            window.dotsInterval = setInterval(() => {
-                dots = (dots + 1) % 4;
-                document.getElementById('dots').textContent = '.'.repeat(dots);
-            }, 500);
-
-            // 폼 데이터 수집
-            const formData = new FormData(document.getElementById('download-form'));
-
-            // 서버에 다운로드 요청 보내기
-            fetch('/download', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                // 다운로드가 완료되면 다운로드 링크를 새 창에서 엽니다.
-                if (response.redirected) {
-                    window.open(response.url, '_blank');
-                    clearInterval(window.dotsInterval); // 로딩 애니메이션 중지
-                    setTimeout(function() {
-                        window.location.reload(); // 페이지 새로고침
-                    }, 5000); // 5초 후 새로고침
-                }
-            })
-            .catch(error => console.error('오류 발생:', error));
-        }
-    </script>
 </body>
 </html>
