@@ -8,7 +8,7 @@ import logging
 
 app = Flask(__name__)
 
-# 로그를 파일 대신 콘솔에 출력
+# 로그를 콘솔에 출력
 logging.basicConfig(level=logging.DEBUG)
 
 @app.route('/')
@@ -37,13 +37,15 @@ def download():
             }] if format == 'mp3' else [],
             'ffmpeg_location': '/usr/bin/ffmpeg',
             'cachedir': False,
-            'retries': 5,
+            'retries': 5,  # 5번까지 자동 재시도
             'http_headers': {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36',
                 'Accept-Language': 'en-US,en;q=0.9',
                 'Referer': 'https://www.youtube.com/',
                 'Origin': 'https://www.youtube.com',
             },
+            'proxy': os.getenv('PROXY', None),  # 필요 시 환경 변수에서 프록시 설정
+            'cookiefile': os.getenv('COOKIEFILE', None),  # 필요 시 환경 변수에서 쿠키 파일 설정
         }
         
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
