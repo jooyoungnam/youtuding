@@ -23,5 +23,5 @@ RUN mkdir -p downloads && chmod -R 777 downloads
 # 포트 설정
 EXPOSE 8000
 
-# 애플리케이션 실행
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "app:app"]
+# 애플리케이션 실행, 타임아웃 시간 설정 (120초)
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "--timeout", "120", "app:app"]
