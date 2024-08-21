@@ -69,10 +69,12 @@ def download():
         logging.info(f"다운로드 완료: {final_path}")
         return redirect(url_for('download_file', filename=os.path.basename(final_path)))
     
+    except youtube_dl.utils.DownloadError as e:
+        logging.error(f"다운로드 오류: {str(e)}")
+        return render_template('error.html', message=f"다운로드 오류가 발생했습니다: {str(e)}")
     except Exception as e:
         logging.error(f"다운로드 오류: {str(e)}")
-        return f"오류가 발생했습니다: {str(e)}", 500
-    
+        return render_template('error.html', message="예기치 못한 오류가 발생했습니다. 다시 시도해 주세요.")
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -87,7 +89,7 @@ def download_file(filename):
     
     except Exception as e:
         logging.error(f"파일 다운로드 오류: {str(e)}")
-        return f"오류가 발생했습니다: {str(e)}", 500
+        return render_template('error.html', message=f"오류가 발생했습니다: {str(e)}")
 
 @app.route('/back')
 def back():
