@@ -8,8 +8,8 @@ import logging
 
 app = Flask(__name__)
 
-# 로그 파일 설정
-logging.basicConfig(filename='download.log', level=logging.DEBUG)
+# 로그를 파일 대신 콘솔에 출력
+logging.basicConfig(level=logging.DEBUG)
 
 @app.route('/')
 def index():
@@ -17,20 +17,16 @@ def index():
 
 @app.route('/download', methods=['POST'])
 def download():
-    # /tmp 디렉토리 사용 (서버에 따라 경로를 설정할 수 있음)
     temp_dir = '/tmp/temp_downloads'
     final_dir = 'downloads'
     
-    # 'url'과 'format' 변수를 폼에서 가져옴
     url = request.form['url']
     format = request.form['format']
     
     try:
-        # 임시 디렉토리 생성 (필요 시)
         if not os.path.exists(temp_dir):
             os.makedirs(temp_dir, exist_ok=True)
         
-        # yt-dlp 옵션 설정
         ydl_opts = {
             'format': 'bestvideo+bestaudio/best' if format == 'mp4' else 'bestaudio/best',
             'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
@@ -41,22 +37,19 @@ def download():
             }] if format == 'mp3' else [],
             'ffmpeg_location': '/usr/bin/ffmpeg',
             'cachedir': False,
-            'retries': 5,  # 다운로드 실패 시 5번까지 자동 재시도
+            'retries': 5,
             'http_headers': {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
                 'Accept-Language': 'en-US,en;q=0.9',
                 'Referer': 'https://www.youtube.com/',
                 'Origin': 'https://www.youtube.com',
             },
-            # 'proxy': 'http://your_proxy_here',  # 필요 시 프록시 설정
-            # 'cookiefile': '/path/to/your/cookies.txt'  # 필요 시 쿠키 파일 설정
         }
         
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(url, download=True)
             original_filename_pattern = os.path.join(temp_dir, f"{info_dict['title']}*")
             
-            # 파일 패턴으로 파일 찾기
             downloaded_files = glob.glob(original_filename_pattern)
             
             if not downloaded_files:
@@ -67,7 +60,6 @@ def download():
             final_name = secure_filename(f"{base_filename}.{format}")
             final_path = os.path.join(final_dir, final_name)
             
-            # 최종 경로로 파일 이동
             if not os.path.exists(final_dir):
                 os.makedirs(final_dir, exist_ok=True)
             shutil.move(original_filename, final_path)
@@ -80,7 +72,6 @@ def download():
         return f"오류가 발생했습니다: {str(e)}", 500
     
     finally:
-        # 임시 디렉토리 정리
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 @app.route('/download-file/<filename>')
