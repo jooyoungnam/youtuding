@@ -24,4 +24,4 @@ RUN mkdir -p downloads && chmod -R 777 downloads
 EXPOSE 8000
 
 # 애플리케이션 실행
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "app:app"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "--timeout", "600", "app:app"]
