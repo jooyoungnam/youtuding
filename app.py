@@ -4,8 +4,12 @@ import os
 import shutil
 from werkzeug.utils import secure_filename
 import glob
+import logging
 
 app = Flask(__name__)
+
+# 로그 파일 설정
+logging.basicConfig(filename='download.log', level=logging.DEBUG)
 
 @app.route('/')
 def index():
@@ -26,6 +30,7 @@ def download():
         if not os.path.exists(temp_dir):
             os.makedirs(temp_dir, exist_ok=True)
         
+        # yt-dlp 옵션 설정
         ydl_opts = {
             'format': 'bestvideo+bestaudio/best' if format == 'mp4' else 'bestaudio/best',
             'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
@@ -35,7 +40,16 @@ def download():
                 'preferredquality': '192',
             }] if format == 'mp3' else [],
             'ffmpeg_location': '/usr/bin/ffmpeg',
-            'cachedir': False
+            'cachedir': False,
+            'retries': 5,  # 다운로드 실패 시 5번까지 자동 재시도
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Referer': 'https://www.youtube.com/',
+                'Origin': 'https://www.youtube.com',
+            },
+            # 'proxy': 'http://your_proxy_here',  # 필요 시 프록시 설정
+            # 'cookiefile': '/path/to/your/cookies.txt'  # 필요 시 쿠키 파일 설정
         }
         
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
@@ -58,13 +72,11 @@ def download():
                 os.makedirs(final_dir, exist_ok=True)
             shutil.move(original_filename, final_path)
         
+        logging.info(f"다운로드 완료: {final_path}")
         return redirect(url_for('download_file', filename=os.path.basename(final_path)))
     
-    except PermissionError:
-        # 권한 문제가 발생할 경우 /tmp 디렉토리를 기본 경로로 사용
-        abort(500, description="디렉토리 권한 문제로 다운로드가 실패했습니다.")
-    
     except Exception as e:
+        logging.error(f"다운로드 오류: {str(e)}")
         return f"오류가 발생했습니다: {str(e)}", 500
     
     finally:
@@ -81,6 +93,7 @@ def download_file(filename):
             raise FileNotFoundError("파일을 찾을 수 없습니다.")
     
     except Exception as e:
+        logging.error(f"파일 다운로드 오류: {str(e)}")
         return f"오류가 발생했습니다: {str(e)}", 500
 
 @app.route('/back')
@@ -94,4 +107,5 @@ if __name__ == '__main__':
         os.chmod('downloads', 0o777)
         app.run(debug=True)
     except Exception as e:
+        logging.error(f"서버 시작 중 오류가 발생했습니다: {str(e)}")
         print(f"서버 시작 중 오류가 발생했습니다: {str(e)}")
