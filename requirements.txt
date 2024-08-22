@@ -3,3 +3,4 @@ yt-dlp
 celery
 redis
 gunicorn
+Werkzeug==2.0.3
