@@ -10,8 +10,8 @@ from celery import Celery
 app = Flask(__name__)
 
 # Celery 구성
-app.config['CELERY_BROKER_URL'] = 'redis://redis:6379/0'
-app.config['CELERY_RESULT_BACKEND'] = 'redis://redis:6379/0'
+app.config['CELERY_BROKER_URL'] = 'redis://redis-12345.cloudtype.io:6379/0'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://redis-12345.cloudtype.io:6379/0'
 
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
