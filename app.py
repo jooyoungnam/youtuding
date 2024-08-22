@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, send_file, redirect, url_for, abort
+from flask import Flask, request, render_template, send_file, redirect, url_for
 import yt_dlp as youtube_dl
 import os
 import shutil
@@ -10,8 +10,8 @@ from celery import Celery
 app = Flask(__name__)
 
 # Celery 구성
-app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
+app.config['CELERY_BROKER_URL'] = 'redis://redis:6379/0'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://redis:6379/0'
 
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
@@ -20,8 +20,8 @@ celery.conf.update(app.config)
 def index():
     return render_template('index.html')
 
-@celery.task
-def download_video(url, format):
+@celery.task(bind=True)
+def download_video(self, url, format):
     temp_dir = '/tmp/temp_downloads'
     final_dir = 'downloads'
 
@@ -38,7 +38,9 @@ def download_video(url, format):
                 'preferredquality': '192',
             }] if format == 'mp3' else [],
             'ffmpeg_location': '/usr/bin/ffmpeg',
-            'cachedir': False
+            'cachedir': False,
+            'retries': 10,
+            'proxy': 'socks5://your_proxy_address:your_proxy_port',  # 필요한 경우 프록시 설정
         }
 
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
@@ -63,7 +65,8 @@ def download_video(url, format):
     
     except Exception as e:
         logging.error(f"다운로드 오류: {str(e)}")
-        return None
+        self.update_state(state='FAILURE', meta={'exc_type': str(type(e)), 'exc_message': str(e)})
+        raise e
     
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
@@ -72,7 +75,7 @@ def download_video(url, format):
 def download():
     url = request.form['url']
     format = request.form['format']
-    task = download_video.delay(url, format)
+    task = download_video.apply_async(args=[url, format])
     return redirect(url_for('status', task_id=task.id))
 
 @app.route('/status/<task_id>')
@@ -80,10 +83,10 @@ def status(task_id):
     task = download_video.AsyncResult(task_id)
     if task.state == 'PENDING':
         return render_template('status.html', state=task.state)
-    elif task.state != 'FAILURE':
-        return redirect(url_for('download_file', filename=os.path.basename(task.result)))
-    else:
+    elif task.state == 'FAILURE':
         return render_template('error.html', message="다운로드에 실패했습니다.")
+    elif task.state == 'SUCCESS':
+        return redirect(url_for('download_file', filename=os.path.basename(task.result)))
 
 @app.route('/download-file/<filename>')
 def download_file(filename):
