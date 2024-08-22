@@ -6,8 +6,19 @@ from werkzeug.utils import secure_filename
 import glob
 import logging
 from celery import Celery
+import redis
 
 app = Flask(__name__)
+
+# Redis 연결 테스트
+redis_status = "Redis 서버에 연결되지 않았습니다."
+
+try:
+    r = redis.Redis(host='redis', port=6379)
+    r.ping()
+    redis_status = "Redis 서버에 성공적으로 연결되었습니다!"
+except redis.ConnectionError:
+    redis_status = "Redis 서버에 연결할 수 없습니다."
 
 # Celery 구성
 app.config['CELERY_BROKER_URL'] = 'redis://redis:6379/0'
@@ -18,7 +29,8 @@ celery.conf.update(app.config)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    # Redis 상태를 메인 페이지에 표시
+    return render_template('index.html', redis_status=redis_status)
 
 @celery.task(bind=True)
 def download_video(self, url, format):
@@ -40,7 +52,7 @@ def download_video(self, url, format):
             'ffmpeg_location': '/usr/bin/ffmpeg',
             'cachedir': False,
             'retries': 10,
-            'proxy': ''  # 프록시가 필요하지 않으면 빈 문자열로 남겨두세요.
+            'proxy': 'socks5://your_proxy_address:your_proxy_port',  # 필요한 경우 프록시 설정
         }
 
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
