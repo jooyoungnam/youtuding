@@ -40,7 +40,7 @@ def download_video(self, url, format):
             'ffmpeg_location': '/usr/bin/ffmpeg',
             'cachedir': False,
             'retries': 10,
-            'proxy': 'socks5://your_proxy_address:your_proxy_port',  # 필요한 경우 프록시 설정
+            'proxy': ''  # 프록시가 필요하지 않으면 빈 문자열로 남겨두세요.
         }
 
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
