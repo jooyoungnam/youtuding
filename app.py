@@ -17,7 +17,7 @@ try:
     r = redis.Redis(host='redis', port=6379)
     r.ping()
     redis_status = "Redis 서버에 성공적으로 연결되었습니다!"
-except redis.ConnectionError:
+except redis.exceptions.ConnectionError:
     redis_status = "Redis 서버에 연결할 수 없습니다."
 
 # Celery 구성
