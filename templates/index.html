@@ -7,13 +7,6 @@
 <body>
     <div class="container">
         <h1>YouTube Downloader</h1>
-        
-        <!-- Display Redis connection status -->
-        <div>
-            <h2>Redis Connection Status:</h2>
-            <p>{{ redis_status }}</p>
-        </div>
-
         <form method="post" action="/download">
             <label for="url">YouTube URL:</label>
             <input type="text" id="url" name="url" required>
