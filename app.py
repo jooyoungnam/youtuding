@@ -14,11 +14,11 @@ app = Flask(__name__)
 redis_status = "Redis 서버에 연결되지 않았습니다."
 
 try:
-    r = redis.Redis(host='redis', port=6379)
+    r = redis.Redis(host='redis', port=6379, socket_connect_timeout=5)
     r.ping()
     redis_status = "Redis 서버에 성공적으로 연결되었습니다!"
-except redis.exceptions.ConnectionError:
-    redis_status = "Redis 서버에 연결할 수 없습니다."
+except redis.ConnectionError as e:
+    redis_status = f"Redis 서버에 연결할 수 없습니다: {str(e)}"
 
 # Celery 구성
 app.config['CELERY_BROKER_URL'] = 'redis://redis:6379/0'
