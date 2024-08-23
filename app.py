@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, send_file, redirect, url_for, abort
+from flask import Flask, request, render_template, send_file, redirect, url_for
 import yt_dlp as youtube_dl
 import os
 import shutil
@@ -6,30 +6,30 @@ from werkzeug.utils import secure_filename
 import glob
 import logging
 from celery import Celery
-import redis
+from celery.result import AsyncResult
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 app = Flask(__name__)
 
-# Redis 연결 테스트 및 로그
-try:
-    r = redis.Redis(host='redis', port=6379)
-    r.ping()
-    redis_status = "Redis 서버에 성공적으로 연결되었습니다!"
-except redis.ConnectionError as e:
-    redis_status = f"Redis 서버에 연결할 수 없습니다: {e}"
-    logging.error(redis_status)
+# SQLite DB 설정
+app.config['CELERY_BROKER_URL'] = 'sqla+sqlite:///celerydb.sqlite'
+app.config['CELERY_RESULT_BACKEND'] = 'db+sqlite:///results.sqlite'
 
-# Celery 구성
-app.config['CELERY_BROKER_URL'] = 'redis://redis:6379/0'
-app.config['CELERY_RESULT_BACKEND'] = 'redis://redis:6379/0'
-
+# Celery 설정
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
 
+# SQLAlchemy 설정
+Base = declarative_base()
+engine = create_engine('sqlite:///results.sqlite')
+Session = sessionmaker(bind=engine)
+session = Session()
+
 @app.route('/')
 def index():
-    # Redis 상태를 메인 페이지에 표시
-    return render_template('index.html', redis_status=redis_status)
+    return render_template('index.html')
 
 @celery.task(bind=True)
 def download_video(self, url, format):
@@ -50,8 +50,6 @@ def download_video(self, url, format):
             }] if format == 'mp3' else [],
             'ffmpeg_location': '/usr/bin/ffmpeg',
             'cachedir': False,
-            'retries': 10,
-            'proxy': 'socks5://your_proxy_address:your_proxy_port',  # 필요한 경우 프록시 설정
         }
 
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
@@ -71,14 +69,14 @@ def download_video(self, url, format):
             if not os.path.exists(final_dir):
                 os.makedirs(final_dir, exist_ok=True)
             shutil.move(original_filename, final_path)
-        
+
         return final_path
-    
+
     except Exception as e:
         logging.error(f"다운로드 오류: {str(e)}")
         self.update_state(state='FAILURE', meta={'exc_type': str(type(e)), 'exc_message': str(e)})
         raise e
-    
+
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -91,7 +89,7 @@ def download():
 
 @app.route('/status/<task_id>')
 def status(task_id):
-    task = download_video.AsyncResult(task_id)
+    task = AsyncResult(task_id, app=celery)
     if task.state == 'PENDING':
         return render_template('status.html', state=task.state)
     elif task.state == 'FAILURE':
@@ -107,7 +105,6 @@ def download_file(filename):
             return send_file(file_path, as_attachment=True)
         else:
             raise FileNotFoundError("파일을 찾을 수 없습니다.")
-    
     except Exception as e:
         return f"오류가 발생했습니다: {str(e)}", 500
 
