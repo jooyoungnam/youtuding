@@ -21,4 +21,4 @@ COPY . .
 RUN mkdir -p downloads && chmod -R 777 downloads
 
 # Celery 작업자 및 Flask 애플리케이션 시작
-CMD redis-server --daemonize yes && celery -A app.celery worker --loglevel=info & gunicorn -w 4 -b 0.0.0.0:8000 --timeout 600 app:app
+CMD redis-server --daemonize yes --logfile /var/log/redis.log && celery -A app.celery worker --loglevel=debug & gunicorn -w 4 -b 0.0.0.0:8000 --timeout 600 app:app
