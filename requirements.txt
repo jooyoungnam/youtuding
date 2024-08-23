@@ -1,6 +1,6 @@
 Flask==2.1.1
 yt-dlp
 celery
-redis
+sqlalchemy
 gunicorn
 Werkzeug==2.0.3
