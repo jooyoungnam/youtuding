@@ -1,26 +1,23 @@
-import logging
 from flask import Flask, request, render_template, send_file, redirect, url_for, abort
 import yt_dlp as youtube_dl
 import os
 import shutil
 from werkzeug.utils import secure_filename
 import glob
+import logging
 from celery import Celery
 import redis
 
 app = Flask(__name__)
 
-# 로그 레벨 설정
-logging.basicConfig(level=logging.DEBUG)
-
-# Redis 연결 테스트
-redis_status = "Redis 서버에 연결되지 않았습니다."
+# Redis 연결 테스트 및 로그
 try:
     r = redis.Redis(host='redis', port=6379)
     r.ping()
     redis_status = "Redis 서버에 성공적으로 연결되었습니다!"
 except redis.ConnectionError as e:
-    redis_status = f"Redis 서버에 연결할 수 없습니다: {str(e)}"
+    redis_status = f"Redis 서버에 연결할 수 없습니다: {e}"
+    logging.error(redis_status)
 
 # Celery 구성
 app.config['CELERY_BROKER_URL'] = 'redis://redis:6379/0'
@@ -32,7 +29,6 @@ celery.conf.update(app.config)
 @app.route('/')
 def index():
     # Redis 상태를 메인 페이지에 표시
-    app.logger.debug('Index 페이지에 접근했습니다.')
     return render_template('index.html', redis_status=redis_status)
 
 @celery.task(bind=True)
