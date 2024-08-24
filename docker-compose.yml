@@ -1,4 +1,3 @@
-# docker-compose.yml
 version: '3.8'
 
 services:
@@ -12,8 +11,8 @@ services:
     depends_on:
       - redis
     environment:
-      - REDIS_HOST=svc.sel4.cloudtype.app
-      - REDIS_PORT=30309
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
 
   redis:
     image: "redis:alpine"
