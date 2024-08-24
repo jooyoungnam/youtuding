@@ -1,25 +1,23 @@
 FROM python:3.9-slim
 
-# 시스템 패키지 업데이트 및 ffmpeg 설치
+# Install necessary packages including ffmpeg
 RUN apt-get update && \
     apt-get install -y ffmpeg && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 작업 디렉토리 설정
+# Set the working directory
 WORKDIR /app
 
-# Python 종속성 설치
+# Install Python dependencies
 COPY requirements.txt requirements.txt
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir --upgrade yt-dlp celery sqlalchemy
+    && pip install --no-cache-dir -r requirements.txt
 
-# 애플리케이션 코드 복사
+# Copy application code
 COPY . .
 
-# downloads 폴더 및 SQLite 데이터베이스 폴더에 쓰기 권한 부여
+# Ensure necessary directories exist and have correct permissions
 RUN mkdir -p downloads && mkdir -p /app/db && chmod -R 777 downloads && chmod -R 777 /app/db
 
-
-# Celery 작업자 및 Flask 애플리케이션 시작
+# Start Celery worker and Flask application with Gunicorn
 CMD celery -A app.celery worker --loglevel=info & gunicorn -w 4 -b 0.0.0.0:8000 --timeout 600 app:app
