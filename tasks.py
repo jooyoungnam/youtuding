@@ -6,7 +6,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-celery = Celery('tasks', broker='redis://localhost:6379/0')
+celery = Celery('tasks', broker=os.getenv('CELERY_BROKER_URL'))
 
 @celery.task(bind=True)
 def download_video(self, url, format):
