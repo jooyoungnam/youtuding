@@ -13,8 +13,9 @@ from sqlalchemy.orm import sessionmaker
 app = Flask(__name__)
 
 # SQLite 데이터베이스 경로 설정
-db_path = 'celerydb.sqlite'
-result_db_path = 'results.sqlite'
+db_path = '/app/db/celerydb.sqlite'
+result_db_path = '/app/db/results.sqlite'
+
 
 # Celery 설정
 app.config['CELERY_BROKER_URL'] = f'sqla+sqlite:///{db_path}'
