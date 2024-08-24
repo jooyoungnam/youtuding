@@ -8,6 +8,7 @@ services:
       - .:/app
     ports:
       - "8000:8000"
-    environment:
-      - REDIS_HOST=svc.sel4.cloudtype.app
-      - REDIS_PORT=30309
+environment:
+  - REDIS_HOST=svc.sel4.cloudtype.app
+  - REDIS_PORT=30309
+
