@@ -2,17 +2,18 @@ from flask import Flask, request, render_template, redirect, url_for, flash
 from celery import Celery
 import logging
 import redis
-from tasks import download_video
 import os
+from tasks import download_video
 
 # Flask 앱 설정
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # 플래시 메시지에 필요
 
 # Redis URL 설정
-redis_host = os.getenv('REDIS_HOST', 'localhost')
-app.config['CELERY_BROKER_URL'] = f'redis://{redis_host}:6379/0'
-app.config['CELERY_RESULT_BACKEND'] = f'redis://{redis_host}:6379/0'
+redis_host = 'svc.sel4.cloudtype.app'
+redis_port = 30309
+app.config['CELERY_BROKER_URL'] = f'redis://{redis_host}:{redis_port}/0'
+app.config['CELERY_RESULT_BACKEND'] = f'redis://{redis_host}:{redis_port}/0'
 
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 # Redis 연결 테스트
 try:
-    r = redis.StrictRedis(host=redis_host, port=6379, db=0)
+    r = redis.StrictRedis(host=redis_host, port=redis_port, db=0)
     r.ping()
     logger.info("Redis 연결 성공")
 except redis.ConnectionError as e:
