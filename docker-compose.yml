@@ -1,11 +1,6 @@
 version: '3.8'
 
 services:
-  redis:
-    image: "redis:alpine"
-    ports:
-      - "6379:6379"
-  
   web:
     build: .
     command: gunicorn -w 4 -b 0.0.0.0:8000 app:app
@@ -13,7 +8,6 @@ services:
       - .:/app
     ports:
       - "8000:8000"
-    depends_on:
-      - redis
     environment:
-      - REDIS_HOST=redis
+      - REDIS_HOST=svc.sel4.cloudtype.app
+      - REDIS_PORT=30309
