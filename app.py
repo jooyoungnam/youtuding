@@ -16,6 +16,8 @@ app = Flask(__name__)
 db_path = '/app/db/celerydb.sqlite'
 result_db_path = '/app/db/results.sqlite'
 
+logging.basicConfig()
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 # Celery 설정
 app.config['CELERY_BROKER_URL'] = f'sqla+sqlite:///{db_path}'
