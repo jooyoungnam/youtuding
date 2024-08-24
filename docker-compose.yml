@@ -1,13 +1,21 @@
+# docker-compose.yml
 version: '3.8'
 
 services:
   web:
     build: .
-    command: sh -c "gunicorn -w 4 -b 0.0.0.0:8000 app:app & celery -A tasks worker --loglevel=info"
+    command: gunicorn -w 4 -b 0.0.0.0:8000 app:app
     volumes:
       - .:/app
     ports:
       - "8000:8000"
+    depends_on:
+      - redis
     environment:
       - REDIS_HOST=svc.sel4.cloudtype.app
       - REDIS_PORT=30309
+
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
