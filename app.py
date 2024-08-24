@@ -18,7 +18,7 @@ celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
 
 # 로그 설정
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Redis 연결 테스트
@@ -28,8 +28,6 @@ try:
     logger.info("Redis 연결 성공")
 except redis.ConnectionError as e:
     logger.error("Redis 연결 실패: %s", e)
-except Exception as e:
-    logger.error("Redis 연결 중 알 수 없는 오류 발생: %s", e)
 
 @app.route('/')
 def index():
@@ -41,14 +39,14 @@ def download():
     url = request.form['url']
     format = request.form['format']
     
-    logger.info("다운로드 요청 수신됨. URL: %s, Format: %s", url, format)
+    logger.debug("다운로드 작업 준비 중. URL: %s, Format: %s", url, format)
     
     try:
         task = download_video.apply_async(args=[url, format])
-        logger.info("비디오 다운로드 작업이 Celery에 제출됨. Task ID: %s", task.id)
+        logger.debug("다운로드 작업이 Celery에 제출됨. Task ID: %s", task.id)
         return redirect(url_for('status', task_id=task.id))
     except Exception as e:
-        logger.error("작업 시작 실패: %s", e)
+        logger.error("다운로드 작업 제출 실패: %s", e)
         flash('다운로드 작업을 시작하는 데 실패했습니다.', 'danger')
         return redirect(url_for('index'))
 
@@ -61,23 +59,19 @@ def status(task_id):
             'state': task.state,
             'status': 'Pending...'
         }
-        logger.info("Task 상태: PENDING")
     elif task.state != 'FAILURE':
         response = {
             'state': task.state,
             'status': task.info.get('status', ''),
             'result': task.info.get('result', '')
         }
-        logger.info("Task 상태: %s, 상태 메시지: %s", task.state, task.info.get('status', ''))
         if task.state == 'SUCCESS':
             flash('다운로드가 완료되었습니다!', 'success')
-            logger.info("다운로드 완료됨. Task ID: %s", task_id)
     else:
         response = {
             'state': task.state,
             'status': str(task.info),
         }
-        logger.error("Task 실패. Task ID: %s, 오류: %s", task_id, str(task.info))
         flash('다운로드에 실패했습니다.', 'danger')
     return render_template('status.html', response=response)
 
