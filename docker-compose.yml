@@ -1,16 +1,17 @@
-version: '3'
+version: '3.8'
 
 services:
   web:
     build: .
-    command: gunicorn -w 4 -b 0.0.0.0:8000 --timeout 600 app:app
+    command: gunicorn app:app --bind 0.0.0.0:8000
     volumes:
       - .:/app
     ports:
       - "8000:8000"
     depends_on:
-      - celery_worker
+      - redis
 
-  celery_worker:
-    build: .
-    command: celery -A app.celery worker --loglevel=info
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
