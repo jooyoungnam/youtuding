@@ -19,6 +19,14 @@ result_db_path = '/app/db/results.sqlite'
 logging.basicConfig()
 logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
+# Ensure database paths exist
+if not os.path.exists('/app/db'):
+    os.makedirs('/app/db', exist_ok=True)
+if not os.path.exists(db_path):
+    open(db_path, 'a').close()
+if not os.path.exists(result_db_path):
+    open(result_db_path, 'a').close()
+
 # Celery 설정
 app.config['CELERY_BROKER_URL'] = f'sqla+sqlite:///{db_path}'
 app.config['CELERY_RESULT_BACKEND'] = f'db+sqlite:///{result_db_path}'
