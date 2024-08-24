@@ -1,6 +1,4 @@
 Flask==2.1.1
+celery==5.2.7
 yt-dlp
-celery
-sqlalchemy
-gunicorn
-Werkzeug==2.0.3
+redis==4.2.0
