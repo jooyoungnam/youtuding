@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template, redirect, url_for, flash
 from celery import Celery
 import logging
+import redis
 from tasks import download_video
 
 # Flask 앱 설정
@@ -13,6 +14,14 @@ app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
 
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
+
+# Redis 연결 확인 및 로그 출력
+try:
+    r = redis.Redis(host='localhost', port=6379, db=0)
+    r.ping()
+    logging.info("Redis 연결 성공")
+except redis.ConnectionError as e:
+    logging.error(f"Redis 연결 실패: {e}")
 
 # 로그 설정
 logging.basicConfig(level=logging.INFO)
@@ -29,8 +38,13 @@ def download():
     
     logger.info("다운로드 작업이 시작되었습니다. URL: %s, Format: %s", url, format)
     
-    task = download_video.apply_async(args=[url, format])
-    return redirect(url_for('status', task_id=task.id))
+    try:
+        task = download_video.apply_async(args=[url, format])
+        return redirect(url_for('status', task_id=task.id))
+    except Exception as e:
+        logger.error(f"작업 시작 실패: {e}")
+        flash('다운로드 작업을 시작하는데 실패했습니다.', 'danger')
+        return redirect(url_for('index'))
 
 @app.route('/status/<task_id>')
 def status(task_id):
