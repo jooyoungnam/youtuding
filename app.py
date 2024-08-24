@@ -1,3 +1,4 @@
+# app.py (Flask 앱)
 from flask import Flask, request, render_template, redirect, url_for, flash
 from celery import Celery
 import logging
@@ -11,7 +12,7 @@ app.secret_key = 'supersecretkey'  # 플래시 메시지에 필요
 
 # Redis URL 설정
 redis_host = os.getenv('REDIS_HOST', 'localhost')
-redis_port = os.getenv('REDIS_PORT', 6379)
+redis_port = int(os.getenv('REDIS_PORT', 6379))
 app.config['CELERY_BROKER_URL'] = f'redis://{redis_host}:{redis_port}/0'
 app.config['CELERY_RESULT_BACKEND'] = f'redis://{redis_host}:{redis_port}/0'
 
