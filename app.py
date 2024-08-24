@@ -3,29 +3,31 @@ from celery import Celery
 import logging
 import redis
 from tasks import download_video
+import os
 
 # Flask 앱 설정
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # 플래시 메시지에 필요
 
-# Celery 설정
-app.config['CELERY_BROKER_URL'] = 'redis://redis:6379/0'
-app.config['CELERY_RESULT_BACKEND'] = 'redis://redis:6379/0'
+# Redis URL 설정
+redis_host = os.getenv('REDIS_HOST', 'localhost')
+app.config['CELERY_BROKER_URL'] = f'redis://{redis_host}:6379/0'
+app.config['CELERY_RESULT_BACKEND'] = f'redis://{redis_host}:6379/0'
 
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
 
-# Redis 연결 확인 및 로그 출력
-try:
-    r = redis.Redis(host='localhost', port=6379, db=0)
-    r.ping()
-    logging.info("Redis 연결 성공")
-except redis.ConnectionError as e:
-    logging.error(f"Redis 연결 실패: {e}")
-
 # 로그 설정
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Redis 연결 테스트
+try:
+    r = redis.StrictRedis(host=redis_host, port=6379, db=0)
+    r.ping()
+    logger.info("Redis 연결 성공")
+except redis.ConnectionError as e:
+    logger.error("Redis 연결 실패: %s", e)
 
 @app.route('/')
 def index():
@@ -42,8 +44,8 @@ def download():
         task = download_video.apply_async(args=[url, format])
         return redirect(url_for('status', task_id=task.id))
     except Exception as e:
-        logger.error(f"작업 시작 실패: {e}")
-        flash('다운로드 작업을 시작하는데 실패했습니다.', 'danger')
+        logger.error("작업 시작 실패: %s", e)
+        flash('다운로드 작업을 시작하는 데 실패했습니다.', 'danger')
         return redirect(url_for('index'))
 
 @app.route('/status/<task_id>')
