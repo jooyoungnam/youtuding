@@ -3,3 +3,4 @@ celery==5.2.7
 yt-dlp
 redis==4.2.0
 gunicorn
+werkzeug==2.0.3
