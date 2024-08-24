@@ -9,8 +9,8 @@ app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # 플래시 메시지에 필요
 
 # Celery 설정
-app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
+app.config['CELERY_BROKER_URL'] = 'redis://redis:6379/0'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://redis:6379/0'
 
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
