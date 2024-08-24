@@ -8,8 +8,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Redis 브로커 URL 설정
-redis_host = os.getenv('REDIS_HOST', 'localhost')
-redis_port = os.getenv('REDIS_PORT', '6379')
+redis_host = os.getenv('REDIS_HOST', 'svc.sel4.cloudtype.app')
+redis_port = os.getenv('REDIS_PORT', '30309')
 celery = Celery('tasks', broker=f'redis://{redis_host}:{redis_port}/0', backend=f'redis://{redis_host}:{redis_port}/0')
 
 @celery.task(bind=True)
