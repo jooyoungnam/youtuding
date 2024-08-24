@@ -6,26 +6,31 @@ from werkzeug.utils import secure_filename
 import glob
 import logging
 from celery import Celery
-from celery.result import AsyncResult
-from sqlalchemy import create_engine, Column, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
+from celery.signals import worker_process_init
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 app = Flask(__name__)
 
-# SQLite DB 설정
-app.config['CELERY_BROKER_URL'] = 'sqla+sqlite:///celerydb.sqlite'
-app.config['CELERY_RESULT_BACKEND'] = 'db+sqlite:///results.sqlite'
+# SQLite 데이터베이스 경로 설정
+db_path = 'celerydb.sqlite'
+result_db_path = 'results.sqlite'
 
 # Celery 설정
+app.config['CELERY_BROKER_URL'] = f'sqla+sqlite:///{db_path}'
+app.config['CELERY_RESULT_BACKEND'] = f'db+sqlite:///{result_db_path}'
+
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
 
-# SQLAlchemy 설정
-Base = declarative_base()
-engine = create_engine('sqlite:///results.sqlite')
+# SQLite 세션 설정
+engine = create_engine(f'sqlite:///{result_db_path}')
 Session = sessionmaker(bind=engine)
-session = Session()
+
+@worker_process_init.connect
+def init_celery_flask_context(**kwargs):
+    global session
+    session = Session()
 
 @app.route('/')
 def index():
@@ -50,12 +55,12 @@ def download_video(self, url, format):
             }] if format == 'mp3' else [],
             'ffmpeg_location': '/usr/bin/ffmpeg',
             'cachedir': False,
+            'retries': 10,
         }
 
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(url, download=True)
             original_filename_pattern = os.path.join(temp_dir, f"{info_dict['title']}*")
-
             downloaded_files = glob.glob(original_filename_pattern)
 
             if not downloaded_files:
@@ -69,14 +74,14 @@ def download_video(self, url, format):
             if not os.path.exists(final_dir):
                 os.makedirs(final_dir, exist_ok=True)
             shutil.move(original_filename, final_path)
-
+        
         return final_path
-
+    
     except Exception as e:
         logging.error(f"다운로드 오류: {str(e)}")
         self.update_state(state='FAILURE', meta={'exc_type': str(type(e)), 'exc_message': str(e)})
         raise e
-
+    
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -89,7 +94,7 @@ def download():
 
 @app.route('/status/<task_id>')
 def status(task_id):
-    task = AsyncResult(task_id, app=celery)
+    task = download_video.AsyncResult(task_id)
     if task.state == 'PENDING':
         return render_template('status.html', state=task.state)
     elif task.state == 'FAILURE':
@@ -105,6 +110,7 @@ def download_file(filename):
             return send_file(file_path, as_attachment=True)
         else:
             raise FileNotFoundError("파일을 찾을 수 없습니다.")
+    
     except Exception as e:
         return f"오류가 발생했습니다: {str(e)}", 500
 
