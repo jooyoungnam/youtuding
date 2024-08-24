@@ -1,6 +1,7 @@
 from celery import Celery
 import yt_dlp as youtube_dl
 import logging
+import os  # 추가
 
 # 로그 설정
 logging.basicConfig(level=logging.INFO)
